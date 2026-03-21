@@ -1,0 +1,69 @@
+defmodule Demo do
+  use NSM
+
+  nsm do
+    [
+      name: "demo-state-machine",
+      port: 12001,
+      thousand_island_options: [],
+      thousand_island_terminal_callbacks: [
+        close: FunctionRef,
+        error: FunctionRef,
+        shutdown: FunctionRef,
+        timeout: FunctionRef
+      ],
+      buffer: <<>>,
+      default_state: [],
+      default_msg_unpacker_pipeline: [
+        # All Function Refs are of the form &Module.Function/arity
+        FunctionRef
+      ],
+      default_msg_handler_pipeline: [
+        {:term, :MSG_TYPE_DEFAULT, FunctionRef}
+      ],
+      initial_state: :listen,
+      initial_telemetry: FunctionRef
+    ]
+  end
+
+  nsm_state :listen do
+    [
+      msg_unpacker_pipeline: [FunctionRef],
+      msg_handler_pipeline: [
+        {:term, :MSG_TYPE_ONE, FunctionRef}
+      ],
+      allowed_transitions: [:logged_in, :invalid_user],
+      enter_telemetry: FunctionRef,
+      # Exit telemetry gets additional data containing timestamps.
+      exit_telemetry: FunctionRef
+    ]
+  end
+
+  nsm_state :logged_in do
+    [
+      msg_unpacker_pipeline: [FunctionRef],
+      msg_handler_pipeline: [
+        {:term, %LoggedInUserStruct{}, FunctionRef},
+        {:function, FunctionRef, FunctionRef}
+      ],
+      error_handlers: [
+        # All Matching Error Handlers are executed when there is an untrapped error.
+        {:term, :error_type, FunctionRef},
+        {:function, FunctionRef, FunctionRef}
+      ],
+      allowed_transitions: [:logged_in, :invalid_user],
+      enter_telemetry: FunctionRef,
+      exit_telemetry: FunctionRef
+    ]
+  end
+
+  nsm_state :invalid_user do
+    [
+      # Terminal states close connection
+      terminal_state: true,
+      enter_telemetry: FunctionRef,
+      exit_telemetry: FunctionRef,
+      cleanup_pipeline: [FunctionRef]
+    ]
+  end
+end
