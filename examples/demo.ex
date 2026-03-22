@@ -29,8 +29,9 @@ defmodule Demo do
   nsm_state :listen do
     [
       msg_unpacker_pipeline: [FunctionRef],
-      msg_handler_pipeline: [
-        {:term, :MSG_TYPE_ONE, FunctionRef}
+      any_match_msg_handlers: [
+        {:term, match_criteria_1, FunctionRef},
+        {:function, MatchCriteriaFunctionRef, FunctionRef}
       ],
       allowed_transitions: [:logged_in, :invalid_user],
       enter_telemetry: FunctionRef,
@@ -44,14 +45,16 @@ defmodule Demo do
       msg_unpacker_pipeline: [FunctionRef],
       msg_handler_pipeline: [
         {:term, %LoggedInUserStruct{}, FunctionRef},
-        {:function, FunctionRef, FunctionRef}
+        {:function, FunctionRef, FunctionRef},
+        # 4th element of this tuple is the transition state.
+        {:term, {:ok, _}, FunctionRef, :admin_authorized}
       ],
       error_handlers: [
         # All Matching Error Handlers are executed when there is an untrapped error.
         {:term, :error_type, FunctionRef},
         {:function, FunctionRef, FunctionRef}
       ],
-      allowed_transitions: [:logged_in, :invalid_user],
+      allowed_transitions: [:admin_authorized],
       enter_telemetry: FunctionRef,
       exit_telemetry: FunctionRef
     ]
