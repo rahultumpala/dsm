@@ -6,6 +6,8 @@
 
 *nsm* structures message transformations, message handling and error handling into consistent pipelines, replacing ad-hoc networking code with a clear, state-driven architecture for building scalable and maintainable network applications.
 
+*nsm* is always a single GenServer process.
+
 # Usage
 
 The following diagram shows a high level overview of the phases that encompass an *nsm*.
@@ -57,6 +59,8 @@ Each *nsm* must define an Entrypoint and the states of the state machine.
 
 This defines the connection establishing logic and the initial memory state of the state machine. Though *nsm* is designed keeping networking applications in mind, it could be used in other scenarios as well, this *entrypoint* phase allows for extending *nsm* to other applications.
 
+For all applications that do not use ThousandIsland or would like to use *nsm* for non networking applications, *nsm* exposes a single arity function `Nsm.entrypoint/1` that can be invoked to trigger the state machine.
+
 ## State
 
 Each state has 2 phases that are executed sequentially, the Transformations phase and the Handlers phase.
@@ -92,4 +96,3 @@ end
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at <https://hexdocs.pm/nsm>.
-

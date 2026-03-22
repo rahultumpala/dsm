@@ -1,25 +1,26 @@
 defmodule Demo do
-  use NSM
+  use Nsm
+
+  @thousand_island_options [
+    port: 12001,
+    thousand_island_options: [],
+    thousand_island_terminal_callbacks: [
+      close: FunctionRef,
+      error: FunctionRef,
+      shutdown: FunctionRef,
+      timeout: FunctionRef
+    ],
+    buffer: <<>>
+  ]
 
   nsm do
     [
       name: "demo-state-machine",
-      port: 12001,
-      thousand_island_options: [],
-      thousand_island_terminal_callbacks: [
-        close: FunctionRef,
-        error: FunctionRef,
-        shutdown: FunctionRef,
-        timeout: FunctionRef
-      ],
-      buffer: <<>>,
+      entrypoint: {:thousand_island, @thousand_island_options},
       default_state: [],
-      default_msg_unpacker_pipeline: [
+      default_transformations: [
         # All Function Refs are of the form &Module.Function/arity
         FunctionRef
-      ],
-      default_msg_handler_pipeline: [
-        {:term, :MSG_TYPE_DEFAULT, FunctionRef}
       ],
       initial_state: :listen,
       initial_telemetry: FunctionRef
