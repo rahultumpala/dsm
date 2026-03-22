@@ -30,7 +30,7 @@ defmodule Demo do
     [
       msg_unpacker_pipeline: [FunctionRef],
       any_match_msg_handlers: [
-        {:term, match_criteria_1, FunctionRef},
+        {:term, MatchCriteria1, FunctionRef},
         {:function, MatchCriteriaFunctionRef, FunctionRef}
       ],
       allowed_transitions: [:logged_in, :invalid_user],
@@ -44,10 +44,10 @@ defmodule Demo do
     [
       msg_unpacker_pipeline: [FunctionRef],
       msg_handler_pipeline: [
-        {:term, %LoggedInUserStruct{}, FunctionRef},
+        {:term, %{}, FunctionRef},
         {:function, FunctionRef, FunctionRef},
         # 4th element of this tuple is the transition state.
-        {:term, {:ok, _}, FunctionRef, :admin_authorized}
+        {:function, &({:ok, _} = &1), FunctionRef, :admin_authorized}
       ],
       error_handlers: [
         # All Matching Error Handlers are executed when there is an untrapped error.
