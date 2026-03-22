@@ -16,8 +16,7 @@ defmodule Demo do
   nsm do
     [
       name: "demo-state-machine",
-      entrypoint: {:thousand_island, @thousand_island_options},
-      default_state: [],
+      context: [],
       default_transformations: [
         # All Function Refs are of the form &Module.Function/arity
         FunctionRef
