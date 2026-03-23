@@ -31,14 +31,6 @@ defmodule Nsm do
     end
   end
 
-  @doc """
-    Perform the following validations:
-    - Check if the shape of pipelines are valid
-    - Check if all declared states have a valid nsm_state definition
-    - Check if the state transitions are valid
-    - Check if the given Function Refs are valid and can be resolved
-    - Check if both msg_handler_pipeline and any_match_handler are given
-  """
   defmacro before_compile(env) do
     nsm_defintion = Module.get_attribute(env.module, :__nsm_def__) |> dbg
 
@@ -49,5 +41,34 @@ defmodule Nsm do
     defined_states
     |> validate_all_states_are_present!(nsm_defintion)
     |> Enum.each(&validate_nsm_state!(&1, nsm_defintion))
+
+    state_triggers = Enum.map(defined_states, &get_state_specific_trigger_block/1)
+
+    quote do
+      defp perform_match(type, expected, actual) do
+        case type do
+          :term -> expected == actual
+          :function -> expected.(actual) == true
+        end
+      end
+
+      def trigger(context) do
+        current_state = context.state
+
+        updated_context = trigger_with_state(current_state, context)
+
+        updated_context
+      end
+
+      unquote_splicing(state_triggers)
+    end
+  end
+
+  defp get_state_specific_trigger_block({state_name, state_options}) do
+    quote bind_quoted: [name: state_name] do
+      def trigger_with_state(current_state, context) when current_state == name do
+        # TODO: unquote quoted with blocks for each handler.
+      end
+    end
   end
 end

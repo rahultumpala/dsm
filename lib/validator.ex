@@ -1,4 +1,13 @@
 defmodule Validator do
+  @moduledoc """
+    Perform the following validations:
+    - Check if the shape of pipelines are valid
+    - Check if all declared states have a valid nsm_state definition
+    - Check if the state transitions are valid
+    - Check if the given Function Refs are valid and can be resolved
+    - Check if both msg_handler_pipeline and any_match_handler are given
+  """
+
   @valid_state_options MapSet.new([
                          :transformations,
                          :any_match_msg_handlers,
