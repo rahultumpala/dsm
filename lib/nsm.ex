@@ -3,6 +3,7 @@ defmodule Nsm do
   Documentation for `Nsm`.
   """
   require Logger
+  import Validator
 
   defmacro __using__(_) do
     quote do
@@ -36,35 +37,17 @@ defmodule Nsm do
     - Check if all declared states have a valid nsm_state definition
     - Check if the state transitions are valid
     - Check if the given Function Refs are valid and can be resolved
+    - Check if both msg_handler_pipeline and any_match_handler are given
   """
   defmacro before_compile(env) do
     nsm_defintion = Module.get_attribute(env.module, :__nsm_def__) |> dbg
+
+    nsm_defintion |> validate_nsm_options!()
+
     defined_states = Module.get_attribute(env.module, :__nsm_state__) |> dbg
-  end
 
-  defp keyword_get(list, key) do
-    Keyword.get(list, key, nil)
-  end
-
-  def validate_nsm_options(nsm_options) do
-    validations = [
-      {keyword_get(nsm_options, :name) != nil,
-       fn ->
-         raise CompileError,
-           description: "Expected name for the nsm but could not find the option."
-       end},
-      {keyword_get(nsm_options, :initial_state) != nil,
-       fn ->
-         raise CompileError,
-           description: "Expected initial state for the nsm but could not find the option."
-       end}
-    ]
-
-    validations
-    |> Enum.each(fn {condition, error} ->
-      if !condition do
-        error.()
-      end
-    end)
+    defined_states
+    |> validate_all_states_are_present!(nsm_defintion)
+    |> Enum.each(&validate_nsm_state!(&1, nsm_defintion))
   end
 end
