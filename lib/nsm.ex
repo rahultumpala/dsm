@@ -4,6 +4,7 @@ defmodule Nsm do
   """
   require Logger
   import Validator
+  import Handler
 
   defmacro __using__(_) do
     quote do
@@ -52,23 +53,16 @@ defmodule Nsm do
         end
       end
 
-      def trigger(context) do
-        current_state = context.state
+      def trigger(context, input) do
+        response = trigger_with_state(context.state, input)
 
-        updated_context = trigger_with_state(current_state, context)
-
-        updated_context
+        case response do
+          {:ok, output, new_state} -> {%Context{context | state: new_state}, output}
+          {:error, error} -> {context, {:error, error}}
+        end
       end
 
       unquote_splicing(state_triggers)
-    end
-  end
-
-  defp get_state_specific_trigger_block({state_name, state_options}) do
-    quote bind_quoted: [name: state_name] do
-      def trigger_with_state(current_state, context) when current_state == name do
-        # TODO: unquote quoted with blocks for each handler.
-      end
     end
   end
 end

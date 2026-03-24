@@ -75,8 +75,6 @@ defmodule Validator do
   end
 
   def validate_nsm_state!({state_name, state_options}, nsm_def) do
-    state_name |> dbg
-
     all_states = keyword_get(nsm_def, :all_states)
     handler_pipeline = keyword_get(state_options, :msg_handler_pipeline)
     any_match_handler = keyword_get(state_options, :any_match_msg_handlers)
@@ -126,8 +124,6 @@ defmodule Validator do
         handler_entries
       end
 
-    handler_entries |> dbg
-
     if keyword_get(state_options, :transformations) != nil do
       tfs = keyword_get(state_options, :transformations)
       tfs |> Enum.each(&ensure_function_ref!/1)
@@ -138,18 +134,11 @@ defmodule Validator do
 
   def validate_pipeline_entry!(entry, all_states) do
     case entry do
-      {:term, _, exec_ref} ->
-        ensure_function_ref!(exec_ref)
-
-      {:term, _, exec_ref, new_state} ->
-        ensure_function_ref!(exec_ref)
-        ensure_new_state_in_all_states!(new_state, all_states)
-
-      {:function, match_ref, exec_ref} ->
+      {match_ref, exec_ref} ->
         ensure_function_ref!(exec_ref)
         ensure_function_ref!(match_ref)
 
-      {:function, match_ref, exec_ref, new_state} ->
+      {match_ref, exec_ref, new_state} ->
         ensure_function_ref!(exec_ref)
         ensure_function_ref!(match_ref)
         ensure_new_state_in_all_states!(new_state, all_states)
@@ -166,10 +155,10 @@ defmodule Validator do
       arity = keyword_get(info, :arity)
       name = keyword_get(info, :name)
 
-      if arity != 2 do
+      if arity != 1 do
         raise CompileError,
           description:
-            "Received a function #{name} with arity #{arity}. Expected a function with arity of 2."
+            "Received a function #{name} with arity #{arity}. Expected a function with arity of 1."
       end
     rescue
       ArgumentError -> raise CompileError, description: "Expected a function but received #{ref}"
