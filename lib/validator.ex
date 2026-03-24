@@ -78,6 +78,7 @@ defmodule Validator do
     all_states = keyword_get(nsm_def, :all_states)
     handler_pipeline = keyword_get(state_options, :msg_handler_pipeline)
     any_match_handler = keyword_get(state_options, :any_match_msg_handlers)
+    error_handlers = keyword_get(state_options, :error_handlers)
 
     validations = [
       {handler_pipeline == nil && any_match_handler == nil,
@@ -91,6 +92,12 @@ defmodule Validator do
          raise CompileError,
            description:
              "Either of :msg_handler_pipeline or :any_match_msg_handlers must be defined but state :#{state_name} defines both."
+       end},
+      {error_handlers != nil && any_match_handler != nil,
+       fn ->
+         raise CompileError,
+           description:
+             ":error_handlers are not supported when :any_match_msg_handlers are defined as it is possible that no handler could match."
        end}
     ]
 
