@@ -19,6 +19,7 @@ defmodule Example.Demo do
         {&valid_intermediate_output?/1, &read_fmt_subChunk/1},
         {&valid_intermediate_output?/1, &read_data_subChunk/1}
       ],
+      error_handlers: [],
       telemetry: fn -> "implement this" end
     ]
   end

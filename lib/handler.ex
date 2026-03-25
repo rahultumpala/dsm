@@ -13,7 +13,8 @@ defmodule Handler do
 
           quote bind_quoted: [
                   pipeline: pipeline |> Macro.escape(),
-                  error_handlers: error_handlers |> Macro.escape()
+                  error_handlers: error_handlers |> Macro.escape(),
+                  cur_state_name: cur_state_name
                 ] do
             handler_result =
               pipeline
@@ -34,6 +35,9 @@ defmodule Handler do
                     # without executing any subsequent handlers
                     {:error, error} ->
                       {:error, error}
+
+                    _ ->
+                      raise ArgumentError, description: "Invalid output from a handler/matcher."
                   end
 
                 acc
@@ -64,6 +68,10 @@ defmodule Handler do
                   # if code reached here then no error handlers could handle the error so return the error itself.
                   {:error, error, new_state} ->
                     {:error, error, new_state}
+
+                  nil ->
+                    # if code reached here then no error handlers were even defined, it was an empty list.
+                    {:error, error, cur_state_name}
                 end
 
               {:ok, response, new_state} ->
@@ -93,8 +101,8 @@ defmodule Handler do
       end
 
     quote do
-      def trigger_with_state(current_state, input)
-          when current_state == unquote(cur_state_name) do
+      defp trigger_with_state(current_state, input)
+           when current_state == unquote(cur_state_name) do
         unquote(fn_definition_block)
       end
     end

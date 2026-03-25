@@ -47,7 +47,16 @@ defmodule Nsm do
 
     state_triggers = Enum.map(defined_states, &get_state_specific_trigger_block/1)
 
+    nsm_context = %Nsm.Context{
+      name: keyword_get(nsm_defintion, :name),
+      state: keyword_get(nsm_defintion, :initial_state)
+    }
+
     quote do
+      def get_ssm_context() do
+        unquote(nsm_context |> Macro.escape())
+      end
+
       def trigger(context = %Nsm.Context{}, input) do
         response = trigger_with_state(context.state, input)
 
@@ -62,7 +71,7 @@ defmodule Nsm do
 
       unquote_splicing(state_triggers)
 
-      def trigger_with_state(state, _) do
+      defp trigger_with_state(state, _) do
         raise ArgumentError,
           description: "State #{state} is not defined. Are you invoking this function manually?"
       end
