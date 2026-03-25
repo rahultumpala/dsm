@@ -1,9 +1,9 @@
 defmodule Example.Demo do
   import Example.WaveFormat
   import Example.Validations
-  use Nsm
+  use Dsm
 
-  nsm do
+  dsm do
     [
       name: "wav-file-reader-state-machine",
       initial_state: :ready,
@@ -11,7 +11,7 @@ defmodule Example.Demo do
     ]
   end
 
-  nsm_state :ready do
+  dsm_state :ready do
     [
       transformations: [&read_file_to_bytes/1],
       msg_handler_pipeline: [

@@ -1,9 +1,9 @@
-defmodule Nsm.MixProject do
+defmodule Dsm.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :nsm,
+      app: :dsm,
       version: "0.1.0",
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,

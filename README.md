@@ -1,16 +1,14 @@
-# nsm
+# dsm
 
-*nsm* stands for Networking as State Machines.
+*dsm* is an abstraction library that helps you model sequential and branched execution paths in your code as Finite State Machines in a declarative manner.
 
-*nsm* models TCP interactions as declarative Finite State Machines, where handlers are defined per event and composed through pattern matching and pipelines.
+*dsm* structures message transformations, message handling and error handling into consistent pipelines, providing a single source of truth for all possible execution paths in your code, helping you build and maintain large projects.
 
-*nsm* structures message transformations, message handling and error handling into consistent pipelines, replacing ad-hoc networking code with a clear, state-driven architecture for building scalable and maintainable network applications.
-
-*nsm* is always a single GenServer process.
+*dsm* runs at compile time, emitting code that runs your pipelines, ensuring zero unexpected behaviour as a result of using *dsm*. Your integration tests work without any changes!
 
 # Usage
 
-The following diagram shows a high level overview of the phases that encompass an *nsm*.
+The following diagram shows a high level overview of the phases that encompass an *dsm*.
 
 ```mermaid
 ---
@@ -22,14 +20,14 @@ config:
 flowchart LR
     C(Client)
     
-    subgraph nsm
+    subgraph dsm
         direction LR
 
         subgraph Entrypoint
             S(ThousandIsland Socket)
         end
 
-        subgraph State["nsm State"]
+        subgraph State["dsm State"]
             subgraph Transformations
                 direction LR
                 U@{shape: "stadium", label: "Message Unpacker"}
@@ -53,13 +51,13 @@ flowchart LR
     Transformations --> Handlers
 ```
 
-Each *nsm* must define an Entrypoint and the states of the state machine.
+Each *dsm* must define an Entrypoint and the states of the state machine.
 
 ## Entrypoint
 
-This defines the connection establishing logic and the initial memory state of the state machine. Though *nsm* is designed keeping networking applications in mind, it could be used in other scenarios as well, this *entrypoint* phase allows for extending *nsm* to other applications.
+This defines the connection establishing logic and the initial memory state of the state machine. Though *dsm* is designed keeping networking applications in mind, it could be used in other scenarios as well, this *entrypoint* phase allows for extending *dsm* to other applications.
 
-For all applications that do not use ThousandIsland or would like to use *nsm* for non networking applications, *nsm* exposes a single arity function `Nsm.entrypoint/1` that can be invoked to trigger the state machine.
+For all applications that do not use ThousandIsland or would like to use *dsm* for non networking applications, *dsm* exposes a single arity function `Dsm.entrypoint/1` that can be invoked to trigger the state machine.
 
 ## State
 
@@ -83,16 +81,16 @@ A state can define **either** of the following:
 ## Installation
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `nsm` to your list of dependencies in `mix.exs`:
+by adding `dsm` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:nsm, "~> 0.1.0"}
+    {:dsm, "~> 0.1.0"}
   ]
 end
 ```
 
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/nsm>.
+be found at <https://hexdocs.pm/dsm>.

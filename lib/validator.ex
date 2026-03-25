@@ -2,7 +2,7 @@ defmodule Validator do
   @moduledoc """
     Perform the following validations:
     - Check if the shape of pipelines are valid
-    - Check if all declared states have a valid nsm_state definition
+    - Check if all declared states have a valid dsm_state definition
     - Check if the state transitions are valid
     - Check if the given Function Refs are valid and can be resolved
     - Check if both msg_handler_pipeline and any_match_handler are given
@@ -16,29 +16,29 @@ defmodule Validator do
                          :telemetry
                        ])
 
-  @valid_nsm_options MapSet.new([
+  @valid_dsm_options MapSet.new([
                        :name,
                        :context,
                        :initial_state,
                        :all_states
                      ])
 
-  def validate_nsm_options!(nsm_options) do
+  def validate_dsm_options!(dsm_options) do
     validations = [
-      {keyword_get(nsm_options, :name) == nil,
+      {keyword_get(dsm_options, :name) == nil,
        fn ->
          raise CompileError,
-           description: "Expected :name for the nsm but could not find the option."
+           description: "Expected :name for the dsm but could not find the option."
        end},
-      {keyword_get(nsm_options, :initial_state) == nil,
+      {keyword_get(dsm_options, :initial_state) == nil,
        fn ->
          raise CompileError,
-           description: "Expected :initial_state for the nsm but could not find the option."
+           description: "Expected :initial_state for the dsm but could not find the option."
        end},
-      {keyword_get(nsm_options, :all_states) == nil,
+      {keyword_get(dsm_options, :all_states) == nil,
        fn ->
          raise CompileError,
-           description: "Expected :all_states for the nsm but could not find the option."
+           description: "Expected :all_states for the dsm but could not find the option."
        end}
     ]
 
@@ -49,13 +49,13 @@ defmodule Validator do
       end
     end)
 
-    ensure_has_recognized_options_only!(nsm_options, @valid_nsm_options)
+    ensure_has_recognized_options_only!(dsm_options, @valid_dsm_options)
 
-    ensure_option_values_are_lists!(nsm_options, [:all_states])
+    ensure_option_values_are_lists!(dsm_options, [:all_states])
   end
 
-  def validate_all_states_are_present!(defined_states, nsm_options) do
-    all_states = keyword_get(nsm_options, :all_states) |> MapSet.new()
+  def validate_all_states_are_present!(defined_states, dsm_options) do
+    all_states = keyword_get(dsm_options, :all_states) |> MapSet.new()
 
     defined_states
     |> Enum.each(fn {name, _} ->
@@ -63,7 +63,7 @@ defmodule Validator do
         false ->
           raise CompileError,
             description:
-              "A state :#{name} has been defined but not included in the :all_states option of nsm definition."
+              "A state :#{name} has been defined but not included in the :all_states option of dsm definition."
 
         true ->
           # ignore
@@ -74,8 +74,8 @@ defmodule Validator do
     defined_states
   end
 
-  def validate_nsm_state!({state_name, state_options}, nsm_def) do
-    all_states = keyword_get(nsm_def, :all_states)
+  def validate_dsm_state!({state_name, state_options}, dsm_def) do
+    all_states = keyword_get(dsm_def, :all_states)
     handler_pipeline = keyword_get(state_options, :msg_handler_pipeline)
     any_match_handler = keyword_get(state_options, :any_match_msg_handlers)
     error_handlers = keyword_get(state_options, :error_handlers)
@@ -175,7 +175,7 @@ defmodule Validator do
   def ensure_new_state_in_all_states!(new_state, all_states) do
     if keyword_get(all_states, new_state) == nil do
       raise CompileError,
-        description: "The state #{new_state} is not defined in :all_states of the nsm definition."
+        description: "The state #{new_state} is not defined in :all_states of the dsm definition."
     end
   end
 

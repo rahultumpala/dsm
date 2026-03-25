@@ -1,8 +1,8 @@
-defmodule NsmTest do
+defmodule DsmTest do
   use ExUnit.Case
-  doctest Nsm
+  doctest Dsm
 
   test "greets the world" do
-    assert Nsm.hello() == :world
+    assert Dsm.hello() == :world
   end
 end
