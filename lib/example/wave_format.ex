@@ -16,9 +16,7 @@ defmodule Example.WaveFormat do
 
   def read_file_to_bytes(path) do
     # returns {:ok, binary}
-    File.read(path) |> dbg
-
-
+    File.read(path)
   end
 
   def read_riff_chunk(bytes) do

@@ -2,24 +2,36 @@ defmodule Handler do
   import Validator
 
   def get_state_specific_trigger_block({cur_state_name, state_options}) do
+    handler_block = get_handlers_block(cur_state_name, state_options)
+    tfs_block = get_transformations_block(cur_state_name, state_options)
+
+    quote do
+      unquote(handler_block)
+      unquote(tfs_block)
+
+      defp trigger_with_state(current_state, input)
+           when current_state == unquote(cur_state_name) do
+        output = execute_transformations(current_state, input)
+        execute_handlers(current_state, output)
+      end
+    end
+  end
+
+  defp get_handlers_block(cur_state_name, state_options) do
     handlers = get_handlers(state_options)
 
-    fn_definition_block =
-      case handlers do
-        # Must match all
-        # a variable input is expected to be present in the context of the code block
-        {:all, pipeline} ->
-          error_handlers = get_error_handlers(state_options)
+    case handlers do
+      # Must match all
+      # a variable input is expected to be present in the context of the code block
+      {:all, pipeline} ->
+        error_handlers = get_error_handlers(state_options)
 
-          quote bind_quoted: [
-                  pipeline: pipeline |> Macro.escape(),
-                  error_handlers: error_handlers |> Macro.escape(),
-                  cur_state_name: cur_state_name
-                ] do
+        quote do
+          def execute_handlers(state, input) when state == unquote(cur_state_name) do
             handler_result =
-              pipeline
-              |> Enum.reduce({:ok, Macro.var(:input, nil), nil}, fn {matcher, executor, new_state},
-                                                                    acc ->
+              unquote(pipeline |> Macro.escape())
+              |> Enum.reduce({:ok, input, unquote(cur_state_name)}, fn {matcher, executor, new_state},
+                                                              acc ->
                 acc =
                   case acc do
                     {:ok, prev_output, new_state} ->
@@ -46,7 +58,7 @@ defmodule Handler do
             case handler_result do
               {:error, error} ->
                 error_handler_result =
-                  error_handlers
+                  unquote(error_handlers |> Macro.escape())
                   |> Enum.reduce(nil, fn {matcher, executor, new_state}, acc ->
                     if matcher.(handler_result) do
                       {:handler_matched, executor.(handler_result), new_state}
@@ -71,7 +83,7 @@ defmodule Handler do
 
                   nil ->
                     # if code reached here then no error handlers were even defined, it was an empty list.
-                    {:error, error, cur_state_name}
+                    {:error, error, unquote(cur_state_name)}
                 end
 
               {:ok, response, new_state} ->
@@ -79,16 +91,18 @@ defmodule Handler do
                 {:ok, response, new_state}
             end
           end
+        end
 
-        {:any, pipeline} ->
-          # can run on any match
-          # a variable input is expected to be present in the context of the code block
-          quote bind_quoted: [pipeline: pipeline |> Macro.escape(), state_name: cur_state_name] do
+      {:any, pipeline} ->
+        # can run on any match
+        # a variable input is expected to be present in the context of the code block
+        quote bind_quoted: [pipeline: pipeline |> Macro.escape(), state_name: cur_state_name] do
+          def execute_handlers(state, input) when state == cur_state_name do
             handler_result =
               pipeline
               |> Enum.reduce(nil, fn {matcher, executor, new_state}, acc ->
                 acc =
-                  case matcher.(Macro.var(:input, nil)) do
+                  case matcher.(input) do
                     {:ok, matcher_output} ->
                       {:ok, executor.(matcher_output), new_state}
 
@@ -98,12 +112,28 @@ defmodule Handler do
                   end
               end)
           end
-      end
+        end
+    end
+  end
 
-    quote do
-      defp trigger_with_state(current_state, input)
-           when current_state == unquote(cur_state_name) do
-        unquote(fn_definition_block)
+  defp get_transformations_block(cur_state_name, state_options) do
+    tfs = Keyword.get(state_options, :transformations, [])
+
+    quote bind_quoted: [tfs: tfs |> Macro.escape(), state: cur_state_name] do
+      def execute_transformations(state, input) when state == state do
+        tfs_result =
+          unquote(tfs |> Macro.escape())
+          |> Enum.reduce(:__tf_not_started, fn tf_function, acc ->
+            if acc == :__tf_not_started do
+              # this is the first function in the Transformations pipeline so this must be executed with the user input
+              # the output of this function will act as the input of the next function.
+              tf_function.(input)
+            else
+              # this is NOT the first function in the Transformations pipeline
+              # It can be executed with the output of the previous transformation function
+              tf_function.(acc)
+            end
+          end)
       end
     end
   end
