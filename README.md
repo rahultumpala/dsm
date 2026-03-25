@@ -6,16 +6,16 @@
 
 *dsm* runs at compile time, emitting code that runs your pipelines, ensuring zero unexpected behaviour as a result of using *dsm*. Your integration tests work without any changes!
 
-# Usage
+# Architecture
 
-The following diagram shows a high level overview of the phases that encompass an *dsm*.
+The following diagram shows a high level overview of the phases that encompass a *dsm* and how you can model network interactions using *dsm*.
 
 ```mermaid
 ---
 config:
     layout: dagre
     theme: mc
-    title: NSM Phases
+    title: DSM Phases
 ---
 flowchart LR
     C(Client)
@@ -23,7 +23,7 @@ flowchart LR
     subgraph dsm
         direction LR
 
-        subgraph Entrypoint
+        subgraph Trigger
             S(ThousandIsland Socket)
         end
 
@@ -41,6 +41,11 @@ flowchart LR
                 H@{shape: "stadium", label: "Message handler 1 "}
                 J@{shape: "stadium", label: "Message handler 2 "}
             end
+
+
+            subgraph ErrorHandlers["Error Handlers"]
+                M@{shape: "stadium", label: "Error Handler"}
+            end
         end
     end
     
@@ -49,34 +54,44 @@ flowchart LR
     S --> Transformations
     U --> V
     Transformations --> Handlers
+    Handlers --> |On Error|ErrorHandlers
 ```
 
-Each *dsm* must define an Entrypoint and the states of the state machine.
+## Components
 
-## Entrypoint
+## Context
 
-This defines the connection establishing logic and the initial memory state of the state machine. Though *dsm* is designed keeping networking applications in mind, it could be used in other scenarios as well, this *entrypoint* phase allows for extending *dsm* to other applications.
+Context is wrapper struct that stores the current state of the state machine and other metadata provided in the *dsm* definition.
 
-For all applications that do not use ThousandIsland or would like to use *dsm* for non networking applications, *dsm* exposes a single arity function `Dsm.entrypoint/1` that can be invoked to trigger the state machine.
+## Trigger
+
+A double arity function `trigger/2` is generated from the *dsm* defintion. This is the entrypoint into the state machine. It takes the *context*, user provided input and runs the state machine.
 
 ## State
 
-Each state has 2 phases that are executed sequentially, the Transformations phase and the Handlers phase.
+Each state has 2 phases that are executed sequentially, the Transformations phase and the Handlers phase, and an optional error handler phase.
 
 ### Transformations
 
-A state can define a pipeline of transformations that are executed sequentially on the incoming data. The output of each function defined in this phase is piped into the other functions defined in this phase and the final output of this phase would be the input for any handlers defined.
+A state can define a pipeline of transformations that are executed sequentially on the incoming data. The output of each function defined in this phase is piped into the other subsequent functions in the pipeline and the final output of this phase would be the input for any handlers defined.
 
 ### Handlers
+
+A Handler is a 2 or 3 element Tuple that defines a match criteria and an executor function that runs on the user input (or the output of Transformations) when the match criteria is met and an optional state transition when the handler is executed successfully. The first 2 elements of the Tuple must be named functions.
 
 A state can define **either** of the following:
 
 1. A pipeline of handlers
-   - In this case the output of the transformations phase is passed through the first handler defined and its output is piped into the subsequent handlers defined while pattern matching against the validity criteria.
-   - All the handlers defined in the pipeline must execute successfully for the pipeline execution to be deemed successful.
-2. A list of any match handlers
-   - In this case the output of the transformations phase is sequentially pattern matched against ALL the handlers defined. Any handler with a valid matching criteria will be executed.
+   - In this case the output of the transformations phase is passed through the first handler defined and its output is piped into the subsequent handlers defined while checking against the validity criteria.
+   - All the handlers defined in the pipeline must execute successfully for the pipeline execution to be considered successful.
+2. A list of *any match handlers*
+   - In this case the output of the transformations phase is sequentially checked against ALL the handlers defined. Any handler with a valid matching criteria will be executed.
 
+### Error Handlers
+
+An Error Handler pipeline can be defined when a pipeline of message handlers is also defined. The shape of the error handler entry is same as that of the message handler entry, a 2 or 3 element Tuple.
+
+When the output of any handler in the message handler pipeline does not match against the subsequent handlers match criteria, the control flow is swithced to the Error handler pipeline. The output is matched against the matchers defined in the Error handler pipeline and a matching Error Handler is executed.
 
 ## Installation
 
