@@ -203,4 +203,8 @@ defmodule Validator do
       end
     end)
   end
+
+  def append_state_name_to_state_options({state_name, state_options}) do
+    {state_name, state_options ++ [name: state_name]}
+  end
 end

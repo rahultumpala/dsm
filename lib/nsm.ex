@@ -43,26 +43,29 @@ defmodule Nsm do
     |> validate_all_states_are_present!(nsm_defintion)
     |> Enum.each(&validate_nsm_state!(&1, nsm_defintion))
 
+    defined_states = defined_states |> Enum.map(&append_state_name_to_state_options/1)
+
     state_triggers = Enum.map(defined_states, &get_state_specific_trigger_block/1)
 
     quote do
-      defp perform_match(type, expected, actual) do
-        case type do
-          :term -> expected == actual
-          :function -> expected.(actual) == true
-        end
-      end
-
-      def trigger(context, input) do
+      def trigger(context = %Nsm.Context{}, input) do
         response = trigger_with_state(context.state, input)
 
         case response do
-          {:ok, output, new_state} -> {%Context{context | state: new_state}, output}
-          {:error, error} -> {context, {:error, error}}
+          {:ok, output, new_state} ->
+            {%Nsm.Context{context | state: new_state}, {:ok, output}}
+
+          {:error, error, new_state} ->
+            {%Nsm.Context{context | state: new_state}, {:error, error}}
         end
       end
 
       unquote_splicing(state_triggers)
+
+      def trigger_with_state(state, _) do
+        raise ArgumentError,
+          description: "State #{state} is not defined. Are you invoking this function manually?"
+      end
     end
   end
 end
