@@ -39,20 +39,13 @@ Running the above snippet produces the following Telemetry events, and returns a
 
 ```elixir
 iex(1)> Example.Demo.get_ssm_context() |> Example.Demo.trigger("example/sample.wav")
-{"Telemetry Data for state :ready -- Elixir.Example.WaveFormat.read_file_to_bytes/1",
- {:ok, 293416}}
-{"Telemetry Data for state :ready -- Elixir.Example.Validations.valid_read_output?/1",
- {:ok, 709}}
-{"Telemetry Data for state :ready -- Elixir.Example.WaveFormat.read_riff_chunk/1",
- {:ok, 2458}}
-{"Telemetry Data for state :ready -- Elixir.Example.Validations.valid_intermediate_output?/1",
- {:ok, 542}}
-{"Telemetry Data for state :ready -- Elixir.Example.WaveFormat.read_fmt_subChunk/1",
- {:ok, 3000}}
-{"Telemetry Data for state :ready -- Elixir.Example.Validations.valid_intermediate_output?/1",
- {:ok, 417}}
-{"Telemetry Data for state :ready -- Elixir.Example.WaveFormat.read_data_subChunk/1",
- {:ok, 2084}}
+{"Telemetry Data for state :ready -- Elixir.Example.WaveFormat.read_file_to_bytes/1", {:ok, 293416}}
+{"Telemetry Data for state :ready -- Elixir.Example.Validations.valid_read_output?/1", {:ok, 709}}
+{"Telemetry Data for state :ready -- Elixir.Example.WaveFormat.read_riff_chunk/1", {:ok, 2458}}
+{"Telemetry Data for state :ready -- Elixir.Example.Validations.valid_intermediate_output?/1", {:ok, 542}}
+{"Telemetry Data for state :ready -- Elixir.Example.WaveFormat.read_fmt_subChunk/1", {:ok, 3000}}
+{"Telemetry Data for state :ready -- Elixir.Example.Validations.valid_intermediate_output?/1", {:ok, 417}}
+{"Telemetry Data for state :ready -- Elixir.Example.WaveFormat.read_data_subChunk/1", {:ok, 2084}}
 {%Dsm.Context{state: :ready, name: "wav-file-reader-state-machine"},
  {:ok,
   {%{
