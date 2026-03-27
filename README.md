@@ -87,11 +87,36 @@ A state can define **either** of the following:
 2. A list of *any match handlers*
    - In this case the output of the transformations phase is sequentially checked against ALL the handlers defined. Any handler with a valid matching criteria will be executed.
 
+The shape of the tuple is as follows:
+
+```elixir
+{matcher_function, executor_function}
+```
+
+Each `matcher_function` is executed with the return value of the transformations pipeline (or the user input if no transformations exist). A return value of `{:ok, data}` is considered to be a successful match and a return value of `{:error, error}` is considered to be unsuccessful. The return value `data` will be passed to the handler when successful and the tuple `{:error, error}` will be passed to the series of error handlers if defined.
+
 ### Error Handlers
 
 An Error Handler pipeline can be defined when a pipeline of message handlers is also defined. The shape of the error handler entry is same as that of the message handler entry, a 2 or 3 element Tuple.
 
 When the output of any handler in the message handler pipeline does not match against the subsequent handlers match criteria, the control flow is swithced to the Error handler pipeline. The output is matched against the matchers defined in the Error handler pipeline and a matching Error Handler is executed.
+
+The shape of the tuple is same as the shape defined above.
+
+### Telemetry
+
+An optional 2 arity telemetry function can be passed per state as part of the state definition. The function, if provided, will be invoked with the data pertaining to all functions defined in the transformations, matchers, message handlers and error handlers. The user can decide whether to emit telemetry events with this data or not.
+
+The 2 arity telemetry function must accept the following data: 
+1. First argument -- `{state_name, module_name, function_name, arity}`
+   - The module, function, arity combo may be of the matcher, message handler or the error handler.
+2. Second argument -- `{:ok , duration_in_nanoseconds}` or `{:error, duration_in_nanoseconds}`.
+
+Here `:ok` and `:error` relate to the function execution. If any **truthy** value is returned by the function, it is considered to be executed successfully, else error, except matcher functions, their return values must match the return values described above.
+
+# Example
+
+Refer to the [example](./example/README.md) for a valid DSM definition and the output.
 
 ## Installation
 
