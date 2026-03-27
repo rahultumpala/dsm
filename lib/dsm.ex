@@ -3,8 +3,7 @@ defmodule Dsm do
   Documentation for `Dsm`.
   """
   require Logger
-  import Validator
-  import Handler
+  import Dsm.{Trigger, Validator, Util}
 
   defmacro __using__(_) do
     quote do

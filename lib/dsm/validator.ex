@@ -1,4 +1,4 @@
-defmodule Validator do
+defmodule Dsm.Validator do
   @moduledoc """
     Perform the following validations:
     - Check if the shape of pipelines are valid
@@ -7,6 +7,8 @@ defmodule Validator do
     - Check if the given Function Refs are valid and can be resolved
     - Check if both msg_handler_pipeline and any_match_handler are given
   """
+
+  import Dsm.Util
 
   @valid_state_options MapSet.new([
                          :transformations,
@@ -177,10 +179,6 @@ defmodule Validator do
       raise CompileError,
         description: "The state #{new_state} is not defined in :all_states of the dsm definition."
     end
-  end
-
-  def keyword_get(list, key) do
-    Keyword.get(list, key, nil)
   end
 
   def ensure_has_recognized_options_only!(options, recognized_options) do

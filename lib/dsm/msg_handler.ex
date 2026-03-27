@@ -1,23 +1,7 @@
-defmodule Handler do
-  import Validator
+defmodule Dsm.MsgHandler do
+  import Dsm.{Util, ErrorHandler}
 
-  def get_state_specific_trigger_block({cur_state_name, state_options}) do
-    handler_block = get_handlers_block(cur_state_name, state_options)
-    tfs_block = get_transformations_block(cur_state_name, state_options)
-
-    quote do
-      unquote(handler_block)
-      unquote(tfs_block)
-
-      defp trigger_with_state(current_state, input)
-           when current_state == unquote(cur_state_name) do
-        output = execute_transformations(current_state, input)
-        execute_handlers(current_state, output)
-      end
-    end
-  end
-
-  defp get_handlers_block(cur_state_name, state_options) do
+  def get_handlers_block(cur_state_name, state_options) do
     handlers = get_handlers(state_options)
 
     case handlers do
@@ -30,8 +14,9 @@ defmodule Handler do
           def execute_handlers(state, input) when state == unquote(cur_state_name) do
             handler_result =
               unquote(pipeline |> Macro.escape())
-              |> Enum.reduce({:ok, input, unquote(cur_state_name)}, fn {matcher, executor, new_state},
-                                                              acc ->
+              |> Enum.reduce({:ok, input, unquote(cur_state_name)}, fn {matcher, executor,
+                                                                        new_state},
+                                                                       acc ->
                 acc =
                   case acc do
                     {:ok, prev_output, new_state} ->
@@ -113,61 +98,6 @@ defmodule Handler do
               end)
           end
         end
-    end
-  end
-
-  defp get_transformations_block(cur_state_name, state_options) do
-    tfs = Keyword.get(state_options, :transformations, [])
-
-    quote bind_quoted: [tfs: tfs |> Macro.escape(), state: cur_state_name] do
-      def execute_transformations(state, input) when state == state do
-        tfs_result =
-          unquote(tfs |> Macro.escape())
-          |> Enum.reduce(:__tf_not_started, fn tf_function, acc ->
-            if acc == :__tf_not_started do
-              # this is the first function in the Transformations pipeline so this must be executed with the user input
-              # the output of this function will act as the input of the next function.
-              tf_function.(input)
-            else
-              # this is NOT the first function in the Transformations pipeline
-              # It can be executed with the output of the previous transformation function
-              tf_function.(acc)
-            end
-          end)
-      end
-    end
-  end
-
-  defp get_handlers(state_options) do
-    handler_pipeline = keyword_get(state_options, :msg_handler_pipeline)
-    any_match_handler = keyword_get(state_options, :any_match_msg_handlers)
-
-    if handler_pipeline == nil do
-      any_match_handler =
-        any_match_handler |> Enum.map(&normalize_handler_entries(&1, state_options))
-
-      {:any, any_match_handler}
-    else
-      handler_pipeline =
-        handler_pipeline |> Enum.map(&normalize_handler_entries(&1, state_options))
-
-      {:all, handler_pipeline}
-    end
-  end
-
-  defp get_error_handlers(state_options) do
-    state_options
-    |> Keyword.get(:error_handlers, [])
-    |> Enum.map(&normalize_handler_entries(&1, state_options))
-  end
-
-  def normalize_handler_entries(entry, state_options) do
-    current_state_name = Keyword.get(state_options, :name)
-
-    case entry do
-      # Set new state as the current state name if new state is not explicitly defined.
-      {matcher, executor} -> {matcher, executor, current_state_name}
-      {matcher, executor, new_state} -> {matcher, executor, new_state}
     end
   end
 end
