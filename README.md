@@ -4,9 +4,9 @@
 
 *dsm* structures message transformations, message handling and error handling into consistent pipelines, providing a single source of truth for all possible execution paths in your code, helping you build and maintain large projects.
 
-*dsm* runs at compile time, emitting code that runs your pipelines, ensuring zero unexpected behaviour as a result of using *dsm*. Your integration tests work without any changes!
+*dsm* exposes a set of macros that expand the *dsm* definition at compile time, emitting code that runs your pipelines, ensuring zero unexpected behaviour as a result of using *dsm*. Your integration tests work without any changes!
 
-# Architecture
+## Components
 
 The following diagram shows a high level overview of the phases that encompass a *dsm* and how you can model network interactions using *dsm*.
 
@@ -19,45 +19,45 @@ config:
 ---
 flowchart LR
     C(Client)
+
+    subgraph E["Elixir Application"]
+        S(TCP Handler)
     
-    subgraph dsm
-        direction LR
+        subgraph dsm
+            direction LR
+            T@{shape: "stadium", label: "trigger/2"}
 
-        subgraph Trigger
-            S(ThousandIsland Socket)
-        end
+            subgraph State["dsm State"]
+                subgraph Transformations
+                    direction LR
+                    U@{shape: "stadium", label: "Message Unpacker"}
+                    V@{shape: "stadium", label: "Message Validator"}
+                    
+                end
 
-        subgraph State["dsm State"]
-            subgraph Transformations
-                direction LR
-                U@{shape: "stadium", label: "Message Unpacker"}
-                V@{shape: "stadium", label: "Message Validator"}
-                
-            end
+                subgraph Handlers
+                    direction LR
+                    H@{shape: "stadium", label: "Message handler 1 "}
+                    J@{shape: "stadium", label: "Message handler 2 "}
+                end
 
-            subgraph Handlers
-                direction LR
-                
-                H@{shape: "stadium", label: "Message handler 1 "}
-                J@{shape: "stadium", label: "Message handler 2 "}
-            end
-
-
-            subgraph ErrorHandlers["Error Handlers"]
-                M@{shape: "stadium", label: "Error Handler"}
+                subgraph ErrorHandlers["Error Handlers"]
+                    M@{shape: "stadium", label: "Error Handler"}
+                end
             end
         end
     end
-    
+
     C <--> |1. Establish TCP Connection| S
     C -->  |2. Send Message| S
-    S --> Transformations
+    S -->| 3. On Message| T
+    T -- 4. {context, output} --> S
+
+    T --> Transformations
     U --> V
     Transformations --> Handlers
     Handlers --> |On Error|ErrorHandlers
 ```
-
-## Components
 
 ## Context
 
