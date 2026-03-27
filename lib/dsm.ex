@@ -57,6 +57,14 @@ defmodule Dsm do
       end
 
       def trigger(context = %Dsm.Context{}, input) do
+
+        all_states = keyword_get(unquote(dsm_defintion), :all_states) |> MapSet.new()
+
+        if !MapSet.member?(all_states, context.state) do
+            raise ArgumentError,
+              message: "The state #{context.state} is not recognized in this DSM."
+        end
+
         response = trigger_with_state(context.state, input)
 
         case response do

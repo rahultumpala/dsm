@@ -1,3 +1,3 @@
 defmodule Dsm.Context do
-  defstruct state: nil, input: nil, output: nil, allowed_states: nil, name: nil
+  defstruct state: nil, name: nil
 end
