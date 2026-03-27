@@ -29,4 +29,18 @@ defmodule Dsm.Util do
   def keyword_get(list, key) do
     Keyword.get(list, key, nil)
   end
+
+  def get_telemetry_fn(state_options) do
+    keyword_get(state_options, :telemetry)
+  end
+
+  def invoke_telemetry_fn(telemetry_fn, executing_fn, state_name, data) do
+    with true <- telemetry_fn != nil,
+         info <- Function.info(executing_fn),
+         module <- Keyword.get(info, :module),
+         name <- Keyword.get(info, :name),
+         arity <- Keyword.get(info, :arity) do
+      telemetry_fn.({state_name, module, name, arity}, data)
+    end
+  end
 end

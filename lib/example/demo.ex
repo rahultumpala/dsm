@@ -20,7 +20,11 @@ defmodule Example.Demo do
         {&valid_intermediate_output?/1, &read_data_subChunk/1}
       ],
       error_handlers: [],
-      telemetry: fn -> "implement telemetry as a workout" end
+      telemetry: &__MODULE__.telemetry/2
     ]
+  end
+
+  def telemetry({state, m, f, a}, data) do
+    IO.inspect({"Telemetry Data for : #{state} -- #{m}.#{f}/#{a}", data})
   end
 end

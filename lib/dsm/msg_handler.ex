@@ -3,6 +3,7 @@ defmodule Dsm.MsgHandler do
 
   def get_handlers_block(cur_state_name, state_options) do
     handlers = get_handlers(state_options)
+    telemetry_fn = get_telemetry_fn(state_options)
 
     case handlers do
       # Must match all
@@ -20,11 +21,58 @@ defmodule Dsm.MsgHandler do
                 acc =
                   case acc do
                     {:ok, prev_output, new_state} ->
+                      matcher_start_time = System.monotonic_time(:nanosecond)
+
                       case matcher.(prev_output) do
                         {:ok, matcher_output} ->
-                          {:ok, executor.(matcher_output), new_state}
+                          # Telemetry code
+                          matcher_end_time = System.monotonic_time(:nanosecond)
+
+                          invoke_telemetry_fn(
+                            unquote(telemetry_fn),
+                            matcher,
+                            unquote(cur_state_name),
+                            {:ok, matcher_end_time - matcher_start_time}
+                          )
+
+                          start_time = System.monotonic_time(:nanosecond)
+                          # Actual Execution
+                          executor_output = executor.(matcher_output)
+                          end_time = System.monotonic_time(:nanosecond)
+
+                          # Telemetry code
+                          case executor_output do
+                            {:error, error} ->
+                              invoke_telemetry_fn(
+                                unquote(telemetry_fn),
+                                executor,
+                                unquote(cur_state_name),
+                                {:error, end_time - start_time}
+                              )
+
+                            {:ok, _} ->
+                              invoke_telemetry_fn(
+                                unquote(telemetry_fn),
+                                executor,
+                                unquote(cur_state_name),
+                                {:ok, end_time - start_time}
+                              )
+                          end
+
+                          {:ok, executor_output, new_state}
 
                         {:error, error} ->
+                          # matcher failed.
+                          matcher_end_time = System.monotonic_time(:nanosecond)
+
+                          # Telemetry code
+                          invoke_telemetry_fn(
+                            unquote(telemetry_fn),
+                            matcher,
+                            unquote(cur_state_name),
+                            {:error, matcher_end_time - matcher_start_time}
+                          )
+
                           {:error, error}
                       end
 
@@ -45,8 +93,46 @@ defmodule Dsm.MsgHandler do
                 error_handler_result =
                   unquote(error_handlers |> Macro.escape())
                   |> Enum.reduce(nil, fn {matcher, executor, new_state}, acc ->
-                    if matcher.(handler_result) do
-                      {:handler_matched, executor.(handler_result), new_state}
+                    # Telemetry code
+                    matcher_start_time = System.monotonic_time(:nanosecond)
+                    matcher_output = matcher.(handler_result)
+                    matcher_end_time = System.monotonic_time(:nanosecond)
+
+                    # Any "truthy" value is accepted.
+                    if matcher_output do
+                      # Telemetry code
+                      invoke_telemetry_fn(
+                        unquote(telemetry_fn),
+                        matcher,
+                        unquote(cur_state_name),
+                        {:ok, matcher_end_time - matcher_start_time}
+                      )
+
+                      executor_start_time = System.monotonic_time(:nanosecond)
+                      # Actual execution
+                      executor_output = executor.(handler_result)
+                      executor_end_time = System.monotonic_time(:nanosecond)
+
+                      # Telemetry code
+                      case executor_output do
+                        {:error, error} ->
+                          invoke_telemetry_fn(
+                            unquote(telemetry_fn),
+                            executor,
+                            unquote(cur_state_name),
+                            {:error, executor_end_time - executor_start_time}
+                          )
+
+                        {:ok, _} ->
+                          invoke_telemetry_fn(
+                            unquote(telemetry_fn),
+                            executor,
+                            unquote(cur_state_name),
+                            {:ok, executor_end_time - executor_start_time}
+                          )
+                      end
+
+                      {:handler_matched, executor_output, new_state}
                     else
                       case acc do
                         # if any of the previous handlers matched then return their response
@@ -89,7 +175,27 @@ defmodule Dsm.MsgHandler do
                 acc =
                   case matcher.(input) do
                     {:ok, matcher_output} ->
-                      {:ok, executor.(matcher_output), new_state}
+                      # Telemetry code
+                      invoke_telemetry_fn(
+                        unquote(telemetry_fn),
+                        matcher,
+                        unquote(cur_state_name),
+                        :ok
+                      )
+
+                      start_time = System.monotonic_time(:nanosecond)
+                      # Actual execution
+                      executor_output = executor.(matcher_output)
+                      end_time = System.monotonic_time(:nanosecond)
+
+                      invoke_telemetry_fn(
+                        unquote(telemetry_fn),
+                        executor,
+                        unquote(cur_state_name),
+                        {:duration, end_time - start_time}
+                      )
+
+                      {:ok, executor_output, new_state}
 
                     {:error, error} ->
                       # just return the error along with the new state which is the current state itself
