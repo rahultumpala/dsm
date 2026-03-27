@@ -35,28 +35,26 @@ defmodule Dsm.MsgHandler do
                             {:ok, matcher_end_time - matcher_start_time}
                           )
 
-                          start_time = System.monotonic_time(:nanosecond)
+                          executor_start_time = System.monotonic_time(:nanosecond)
                           # Actual Execution
                           executor_output = executor.(matcher_output)
-                          end_time = System.monotonic_time(:nanosecond)
+                          executor_end_time = System.monotonic_time(:nanosecond)
 
-                          # Telemetry code
-                          case executor_output do
-                            {:error, error} ->
-                              invoke_telemetry_fn(
-                                unquote(telemetry_fn),
-                                executor,
-                                unquote(cur_state_name),
-                                {:error, end_time - start_time}
-                              )
-
-                            {:ok, _} ->
-                              invoke_telemetry_fn(
-                                unquote(telemetry_fn),
-                                executor,
-                                unquote(cur_state_name),
-                                {:ok, end_time - start_time}
-                              )
+                          # Telemetry code. Any truthy value is accepted as successful execution.
+                          if executor_output do
+                            invoke_telemetry_fn(
+                              unquote(telemetry_fn),
+                              executor,
+                              unquote(cur_state_name),
+                              {:ok, executor_end_time - executor_start_time}
+                            )
+                          else
+                            invoke_telemetry_fn(
+                              unquote(telemetry_fn),
+                              executor,
+                              unquote(cur_state_name),
+                              {:error, executor_end_time - executor_start_time}
+                            )
                           end
 
                           {:ok, executor_output, new_state}
@@ -113,23 +111,21 @@ defmodule Dsm.MsgHandler do
                       executor_output = executor.(handler_result)
                       executor_end_time = System.monotonic_time(:nanosecond)
 
-                      # Telemetry code
-                      case executor_output do
-                        {:error, error} ->
-                          invoke_telemetry_fn(
-                            unquote(telemetry_fn),
-                            executor,
-                            unquote(cur_state_name),
-                            {:error, executor_end_time - executor_start_time}
-                          )
-
-                        {:ok, _} ->
-                          invoke_telemetry_fn(
-                            unquote(telemetry_fn),
-                            executor,
-                            unquote(cur_state_name),
-                            {:ok, executor_end_time - executor_start_time}
-                          )
+                      # Telemetry code. Any truthy value is accepted as successful execution.
+                      if executor_output do
+                        invoke_telemetry_fn(
+                          unquote(telemetry_fn),
+                          executor,
+                          unquote(cur_state_name),
+                          {:ok, executor_end_time - executor_start_time}
+                        )
+                      else
+                        invoke_telemetry_fn(
+                          unquote(telemetry_fn),
+                          executor,
+                          unquote(cur_state_name),
+                          {:error, executor_end_time - executor_start_time}
+                        )
                       end
 
                       {:handler_matched, executor_output, new_state}

@@ -25,6 +25,6 @@ defmodule Example.Demo do
   end
 
   def telemetry({state, m, f, a}, data) do
-    IO.inspect({"Telemetry Data for : #{state} -- #{m}.#{f}/#{a}", data})
+    IO.inspect({"Telemetry Data for state :#{state} -- #{m}.#{f}/#{a}", data})
   end
 end
