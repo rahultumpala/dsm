@@ -47,6 +47,8 @@ defmodule Dsm.MixProject do
     [
       licenses: ["MIT"],
       maintainers: ["Rahul Tumpala"],
+      files:  ~w(lib .formatter.exs mix.exs README* LICENSE*
+                 CHANGELOG* diagram),
       links: %{
         "GitHub" => @source_url,
         "Changelog" => "https://hexdocs.pm/iris/changelog.html",

@@ -10,7 +10,7 @@
 
 The following mermaid diagram shows a high level overview of the phases that encompass a *dsm* and how you can model network interactions using *dsm*.
 
-![dsm architecture](https://github.com/rahultumpala/dsm/blob/main/diagram/dsm-arch.png)
+![dsm architecture](./diagram/dsm-arch.png)
 
 ## Context
 
