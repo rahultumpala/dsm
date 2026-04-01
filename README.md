@@ -91,9 +91,11 @@ The shape of the tuple is as follows:
 
 ```elixir
 {matcher_function, executor_function}
+# or 
+{matcher_function, executor_function, state_transition}
 ```
 
-Each `matcher_function` is executed with the return value of the transformations pipeline (or the user input if no transformations exist). A return value of `{:ok, data}` is considered to be a successful match and a return value of `{:error, error}` is considered to be unsuccessful. The return value `data` will be passed to the handler when successful and the tuple `{:error, error}` will be passed to the series of error handlers if defined.
+Each `matcher_function` is executed with the return value of the transformations pipeline as the input(or the user input if no transformations exist). A return value of `{:ok, data}` is considered to be a successful match and a return value of `{:error, error}` is considered to be unsuccessful. The return value `data` will be passed to the handler when successful and the tuple `{:error, error}` will be passed to the series of error handlers if defined. When the handler(whole pipeline in the case of a pipeline) is executed successfully a state transition, if defined, will occur and this is reflected in the updated `Context` struct in the return value, ensuring the next trigger will run the relevant state pipelines. 
 
 ### Error Handlers
 
