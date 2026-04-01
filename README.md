@@ -1,6 +1,6 @@
 # dsm
 
-*dsm* is an abstraction library that helps you model sequential and branched execution paths in your code as Finite State Machines in a declarative manner.
+*dsm* is a zero dependency, compile-time abstraction library that helps you model sequential and branched execution paths in your code as Finite State Machines, in a declarative manner.
 
 *dsm* structures message transformations, message handling and error handling into consistent pipelines, providing a single source of truth for all possible execution paths in your code, helping you build and maintain large projects.
 
@@ -8,56 +8,9 @@
 
 ## Components
 
-The following diagram shows a high level overview of the phases that encompass a *dsm* and how you can model network interactions using *dsm*.
+The following mermaid diagram shows a high level overview of the phases that encompass a *dsm* and how you can model network interactions using *dsm*.
 
-```mermaid
----
-config:
-    layout: dagre
-    theme: mc
-    title: DSM Phases
----
-flowchart LR
-    C(Client)
-
-    subgraph E["Elixir Application"]
-        S(TCP Handler)
-    
-        subgraph dsm
-            direction LR
-            T@{shape: "stadium", label: "trigger/2"}
-
-            subgraph State["dsm State"]
-                subgraph Transformations
-                    direction LR
-                    U@{shape: "stadium", label: "Message Unpacker"}
-                    V@{shape: "stadium", label: "Message Validator"}
-                    
-                end
-
-                subgraph Handlers
-                    direction LR
-                    H@{shape: "stadium", label: "Message handler 1 "}
-                    J@{shape: "stadium", label: "Message handler 2 "}
-                end
-
-                subgraph ErrorHandlers["Error Handlers"]
-                    M@{shape: "stadium", label: "Error Handler"}
-                end
-            end
-        end
-    end
-
-    C <--> |1. Establish TCP Connection| S
-    C -->  |2. Send Message| S
-    S -->| 3. On Message| T
-    T -- 4. {context, output} --> S
-
-    T --> Transformations
-    U --> V
-    Transformations --> Handlers
-    Handlers --> |On Error|ErrorHandlers
-```
+![dsm architecture](https://github.com/rahultumpala/dsm/blob/main/diagram/dsm-arch.png)
 
 ## Context
 
@@ -118,11 +71,11 @@ Here `:ok` and `:error` relate to the function execution. If any **truthy** valu
 
 # Example
 
-Refer to the [example](./example/README.md) for a valid DSM definition and the output.
+Refer to the [example](https://github.com/rahultumpala/dsm/blob/main/example/README.md) for a valid DSM definition and the output.
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
+[Available in Hex](https://hex.pm/packages/dsm), the package can be installed
 by adding `dsm` to your list of dependencies in `mix.exs`:
 
 ```elixir
@@ -132,7 +85,3 @@ def deps do
   ]
 end
 ```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/dsm>.
